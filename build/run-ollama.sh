@@ -9,6 +9,7 @@ while [ "$(ollama list | grep 'NAME')" == "" ]; do
 done
 
 ollama pull llama3.2
-ollama pull llava
 ollama pull sqlcoder
+ollama pull llava
 ollama pull mistral
+ollama pull mathstral

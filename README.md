@@ -43,13 +43,13 @@ root@b7f6afb8368c:/#
 ## Work with ollama
 ### List existing models
 ```bash
-$ docker exec -it r-ollama bash
 root@b7f6afb8368c:/# ollama list
-NAME               ID              SIZE      MODIFIED     
-mistral:latest     f974a74358d6    4.1 GB    18 hours ago    
-sqlcoder:latest    77ac14348387    4.1 GB    18 hours ago    
-llava:latest       8dd30f6b0cb1    4.7 GB    19 hours ago    
-llama3.2:latest    a80c4f17acd5    2.0 GB    19 hours ago 
+NAME                ID              SIZE      MODIFIED          
+mathstral:latest    4ee7052be55a    4.1 GB    52 minutes ago       
+mistral:latest      f974a74358d6    4.1 GB    58 minutes ago       
+llava:latest        8dd30f6b0cb1    4.7 GB    About an hour ago    
+sqlcoder:latest     77ac14348387    4.1 GB    About an hour ago    
+llama3.2:latest     a80c4f17acd5    2.0 GB    About an hour ago    
 root@b7f6afb8368c:/# 
 ```
 
@@ -59,7 +59,6 @@ root@b7f6afb8368c:/var/tmp/src/R# ollama ps
 NAME    ID    SIZE    PROCESSOR    UNTIL 
 root@b7f6afb8368c:/var/tmp/src/R#
 ```
-
 
 ### Run sample model
 ```bash
@@ -111,11 +110,12 @@ Type 'q()' to quit R.
 ### Verify installed models
 ```r
 > ollamar::list_models() 
-             name   size parameter_size quantization_level            modified
-1 llama3.2:latest   2 GB           3.2B             Q4_K_M 2024-11-29T19:34:58
-2    llava:latest 4.7 GB             7B               Q4_0 2024-11-29T19:42:32
-3  mistral:latest 4.1 GB           7.2B               Q4_0 2024-11-29T19:55:49
-4 sqlcoder:latest 4.1 GB             7B               Q4_0 2024-11-29T19:49:16
+              name   size parameter_size quantization_level            modified
+1  llama3.2:latest   2 GB           3.2B             Q4_K_M 2024-12-01T14:44:39
+2     llava:latest 4.7 GB             7B               Q4_0 2024-12-01T14:59:24
+3 mathstral:latest 4.1 GB           7.2B               Q4_0 2024-12-01T15:12:25
+4   mistral:latest 4.1 GB           7.2B               Q4_0 2024-12-01T15:05:48
+5  sqlcoder:latest 4.1 GB             7B               Q4_0 2024-12-01T14:51:14
 >
 ```
 
@@ -217,8 +217,15 @@ translation <- reviews |> mall::llm_translate(review, "spanish")
 3 No estoy seguro de cómo me siento con mi nuevo lavacorteza. Grande el color pero difícil entender
 ```
 
-res <- ollamar::generate(model = "llama3.2", prompt = prompt, output = "text")
-response <- ollamar::generate_text(model, prompt, 
-                                   temperature = 0.7, 
-                                   max_tokens = 100, 
-                                   top_k = 50)
+## Execute other examples
+### Find reviews sentiment with prompt 
+The code was take from [here](https://cran.r-project.org/web/packages/ollamar/readme/README.html).
+```bash
+root@b7f6afb8368c:/var/tmp/src/R# Rscript reviews_core.R 
+```
+
+### Analise gene sequence
+The code was taken from [here](https://www.r-bloggers.com/2024/08/use-r-to-prompt-a-local-llm-with-ollamar/).
+```bash
+root@b7f6afb8368c:/var/tmp/src/R# Rscript gene_sequence.R 
+```
