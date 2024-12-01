@@ -1,0 +1,109 @@
+FROM ubuntu:noble
+
+# setup ubuntu
+RUN apt-get update \
+    && apt-get install -y locales \
+    && rm -rf /var/lib/apt/lists/* \
+	&& localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
+ENV LANG en_US.utf8
+
+## Prepare setup of R and Python dependencies
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -qq \
+    && apt-get install -y --no-install-recommends \
+        apt-utils \
+        build-essential \
+        curl \
+        software-properties-common \
+        vim \
+        wget 
+
+# install ollama manually
+RUN curl -fsSL https://ollama.com/install.sh | sh
+
+## Pull required llm models
+COPY build/run-ollama.sh /tmp/run-ollama.sh
+RUN chmod +x /tmp/run-ollama.sh \
+    && /tmp/run-ollama.sh
+
+## Prepare setup of R and Python dependencies
+RUN apt-get install -y --no-install-recommends \
+        cmake \
+        curl \
+        git \
+        gnupg2 \
+        htop \
+        lsb-release \
+        libcairo2-dev \
+        libcurl4-openssl-dev \
+        libgit2-dev \
+        libgdbm-dev \
+        libncurses5-dev \
+        libnss3-dev \
+        libssl-dev \
+        libfontconfig1-dev \
+        libxml2-dev \
+        meson \
+        python3 \
+        python3-pip \
+        python3-setuptools \
+        python3-dev \
+        zlib1g-dev
+
+## install r base
+RUN apt update -qq \
+    && wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | tee -a /etc/apt/trusted.gpg.d/cran_ubuntu_key.asc \
+    && apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 51716619E084DAB9 \
+    && add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/" \
+    && apt-get install -y --no-install-recommends \
+        r-base-dev \
+        libharfbuzz-dev \
+        libfribidi-dev \
+        libfreetype6-dev \
+        libpng-dev \
+        libtiff5-dev \
+        libjpeg-dev
+
+## create R working space
+RUN rm -f /etc/R/Rprofile.site \
+    && mkdir -p /etc/R \
+    && mkdir -p /root/R/x86_64-pc-linux-gnu-library/4.4 \
+    && echo 'local({\n\
+        options(\n\
+            repos = c(\n\
+                CRAN_US = "http://cran.us.r-project.org"\n \
+            )\n\
+        )\n\
+    })\n\n' >> /etc/R/Rprofile.site \
+    && touch /etc/R/Renviron.site \
+    && sed -i -e 's/\$*.R_LIBS_SITE*.://g' /etc/R/Renviron.site
+
+# remove blinker as it would not allow when defining a global environment
+RUN apt purge -y python3-blinker \
+    && apt autoremove -y \
+    && python3 -m pip config set global.break-system-packages true \
+    && pip3 install --no-cache-dir \
+       Flask \
+       ollama \
+       requests
+
+# update and clean apt lists
+RUN apt-get update \
+    && apt upgrade -y \
+    && apt autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# install R packages
+RUN R -e "install.packages('fs')"
+RUN R -e "install.packages(c('assertthat', \
+    'devtools', \
+    'dplyr', \
+    'microbenchmark', \
+    'tictoc'), \
+dependencies=TRUE)"
+RUN R -e "install.packages(c('mall', 'ollamar'))"
+
+WORKDIR /var/tmp/src/R
+EXPOSE 11434
+ENTRYPOINT ["/usr/local/bin/ollama", "serve"]

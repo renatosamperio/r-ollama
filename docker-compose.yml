@@ -1,0 +1,13 @@
+services:
+  r-ollama:
+    build:
+        context: .
+        dockerfile: ./build/Dockerfile_Unix
+    container_name: r-ollama
+    image: renatosamperio/r-ollama
+    platform: linux/amd64
+    ports:
+      - "11435:11434"
+    volumes:
+      - "$HOME_PATH:/var/tmp"
+    
