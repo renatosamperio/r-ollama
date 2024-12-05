@@ -2,7 +2,7 @@
 
 ## Prepare working environment
 ### Clone repository
-Clone repository from github. This examples uses an SSH approache that requeries github authentication..
+Clone repository from github and get go to the directory. This examples uses an SSH approach to clone the repostory that requeries github authentication. However, there are different ways to do it.
 ```bash
 $ cd ~
 $ mkdir workspace
@@ -11,30 +11,36 @@ $ git clone git@github.com:renatosamperio/r-ollama.git
 $ cd r-ollama
 ```
 
+### Define working directory to be mounted
+This step could be done in different ways. In the provided `docker-compose.yml` file, it is specified to mount a `volume` from a path to where this repo was cloned.
+```yaml
+    ...
+    volumes:
+      - "$HOME_PATH:/var/tmp"
+```
+
+You could define in such space your path or define the path in the variable called `HOME_PATH`. To do that, specify the path in a configuration file called `.env`.
+
+```bash
+$ echo "HOME_PATH=~/workspace/r-ollama" > .env
+```
+In this example, this repository was cloned in `~/workspace`.
+
 ### Pull image
-Pull example image from Docker registry by using docker compose file.
+Now pull example image from Docker registry by using configurtion file
 ```bash
 $ docker compose pull r-ollama
 ```
-
-### Build image
-In case the image would require to update or add configured packages 
-```bash
-$ docker compose build r-ollama
-```
+The downloading might take some time depending on the size.
 
 ### Run container
+Once the image would be downloaded, start it in a detached way with `docker compose`.
 ```bash
 $ docker compose up -d r-ollama
 ```
 
-### Define working directory
-The container is configured to mount a local path with the content of cloned repository.
-```bash
-$ cat "HOME_PATH=~/workspace/r-ollama" > .env
-```
-
 ### Execute container
+Now, let's go inside the container.
 ```bash
 $ docker exec -it r-ollama bash
 root@b7f6afb8368c:/# 
@@ -54,13 +60,16 @@ root@b7f6afb8368c:/#
 ```
 
 ### Verify any running model
+Check if any model would be running.
 ```bash
 root@b7f6afb8368c:/var/tmp/src/R# ollama ps
 NAME    ID    SIZE    PROCESSOR    UNTIL 
 root@b7f6afb8368c:/var/tmp/src/R#
 ```
+In this example, it is not running anything.
 
 ### Run sample model
+Let's run the listed model `llama3.2` and give it a prompt for testing along the command line.  
 ```bash
 root@b7f6afb8368c:/var/tmp/src/R# ollama run llama3.2
 >>> What is the capital of France?
@@ -70,17 +79,9 @@ The capital of France is Paris.
 root@b7f6afb8368c:/var/tmp/src/R#
 ```
 
-### Verify any running model
-```bash
-root@b7f6afb8368c:/var/tmp/src/R# # ollama ps
-NAME               ID              SIZE      PROCESSOR    UNTIL              
-llama3.2:latest    a80c4f17acd5    3.5 GB    100% CPU     2 minutes from now   
-root@b7f6afb8368c:/var/tmp/src/R#
-```
-
-## Run ollama `R` examples
-### Run `R` in the container
-Go to example path to run examples from `mall` package.
+## Run `R` examples
+### Execute `R` console
+Let's run an `R` console.
 ```bash
 root@a50cc4ee0735:/# 
 root@a50cc4ee0735:/var/tmp/src/R# R
@@ -107,6 +108,7 @@ Type 'q()' to quit R.
 ```
 
 ## Run LLM example package `ollamar`
+This command works exactly the same as when it is calling the `ollama` CLI.
 ### Verify installed models
 ```r
 > ollamar::list_models() 
@@ -120,7 +122,7 @@ Type 'q()' to quit R.
 ```
 
 ### Send prompts to local models
-Use a trained model to get a response.
+Use a trained model to get a response similar to `ollama` CLI prompt.
 ```r
 > prompt <- "What is the capital of France?"
 > tictoc::tic(msg = "Got response after")
@@ -130,7 +132,7 @@ Use a trained model to get a response.
 [1] "The capital of France is Paris."
 ```
 
-Use a multi-model model to access images.
+Use a multi-model model to access images. For that, we can use model `llava`.
 ```r
 > messages <- ollamar::create_message("What is in the image?", images = "lion.png")
 > res <- ollamar::chat("llava", messages, output = "text")
@@ -146,6 +148,7 @@ Use a multi-model model to access images.
 ```
 
 ### Load test data
+This package comes with some example data about user's reviews.
 ```r
 > data("reviews")
 > reviews
@@ -218,7 +221,7 @@ translation <- reviews |> mall::llm_translate(review, "spanish")
 ```
 
 ## Execute other examples
-### Find reviews sentiment with prompt 
+### Additional examples
 The code was take from [here](https://cran.r-project.org/web/packages/ollamar/readme/README.html).
 ```bash
 root@b7f6afb8368c:/var/tmp/src/R# Rscript reviews_core.R 
