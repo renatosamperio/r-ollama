@@ -4,11 +4,11 @@
 ### Clone repository
 Clone repository from github and get go to the directory. This examples uses an SSH approach to clone the repostory that requeries github authentication. However, there are different ways to do it.
 ```bash
-$ cd ~
-$ mkdir workspace
-$ cd workspace
-$ git clone git@github.com:renatosamperio/r-ollama.git
-$ cd r-ollama
+cd ~
+mkdir workspace
+cd workspace
+git clone git@github.com:renatosamperio/r-ollama.git
+cd r-ollama
 ```
 
 ### Define working directory to be mounted
@@ -22,27 +22,39 @@ This step could be done in different ways. In the provided `docker-compose.yml` 
 You could define in such space your path or define the path in the variable called `HOME_PATH`. To do that, specify the path in a configuration file called `.env`.
 
 ```bash
-$ echo "HOME_PATH=~/workspace/r-ollama" > .env
+echo "HOME_PATH=$(pwd)" > .env
 ```
-In this example, this repository was cloned in `~/workspace`.
-
-### Pull image
+In this example, this repository was cloned in `~/workspace`. Then, check the configuration works.
+```bash
+docker compose config
+```
+The previous command should show the container configuration. Otherwise it would fail.
+### Get the image locally
 Now pull example image from Docker registry by using configurtion file
 ```bash
-$ docker compose pull r-ollama
+docker compose pull r-ollama
 ```
-The downloading might take some time depending on the size.
+The downloading might take some time depending on the image size.
 
 ### Run container
 Once the image would be downloaded, start it in a detached way with `docker compose`.
 ```bash
-$ docker compose up -d r-ollama
+docker compose up -d r-ollama
 ```
 
-### Execute container
-Now, let's go inside the container.
+Verify that the image would be running
 ```bash
-$ docker exec -it r-ollama bash
+docker ps -a
+CONTAINER ID   IMAGE                     COMMAND                  CREATED      STATUS      PORTS                      NAMES
+48fc4b6c5691   renatosamperio/r-ollama   "/usr/local/bin/olla…"   1 min ago   Up 4 days   0.0.0.0:11435->11434/tcp   r-ollama
+```
+
+The command ouput should show the status of a running container. In the next command we will use the `NAME` of the container.
+
+### Virtualise the image content in your local system
+Now, to run into the container.
+```bash
+docker exec -it r-ollama bash
 root@b7f6afb8368c:/# 
 ```
 
@@ -111,7 +123,7 @@ Type 'q()' to quit R.
 This command works exactly the same as when it is calling the `ollama` CLI.
 ### Verify installed models
 ```r
-> ollamar::list_models() 
+ollamar::list_models() 
               name   size parameter_size quantization_level            modified
 1  llama3.2:latest   2 GB           3.2B             Q4_K_M 2024-12-01T14:44:39
 2     llava:latest 4.7 GB             7B               Q4_0 2024-12-01T14:59:24
@@ -124,45 +136,43 @@ This command works exactly the same as when it is calling the `ollama` CLI.
 ### Send prompts to local models
 Use a trained model to get a response similar to `ollama` CLI prompt.
 ```r
-> prompt <- "What is the capital of France?"
-> tictoc::tic(msg = "Got response after")
-> res <- ollamar::generate(model = "llama3.2", prompt = prompt, output = "text")
-> tictoc::toc()
-> print(res)
+prompt <- "What is the capital of France?"
+res <- ollamar::generate(model = "llama3.2", prompt = prompt, output = "text")
+print(res)
 [1] "The capital of France is Paris."
 ```
 
 Use a multi-model model to access images. For that, we can use model `llava`.
 ```r
-> messages <- ollamar::create_message("What is in the image?", images = "lion.png")
-> res <- ollamar::chat("llava", messages, output = "text")
-> print(res)
+messages <- ollamar::create_message("What is in the image?", images = "lion.png")
+res <- ollamar::chat("llava", messages, output = "text")
+print(res)
 [1] " The image features a majestic lion roaring against a backdrop of the sunset or sunrise. The lion appears to be in mid-roar, showcasing its powerful teeth and muscles. The setting suggests it's either early morning or late afternoon due to the warm lighting and colors present in the sky. "
 ```
 
 ## Run LLM example package `mall`
 ### Load library
 ```r
-> library(mall)
+library(mall)
 >
 ```
 
 ### Load test data
 This package comes with some example data about user's reviews.
 ```r
-> data("reviews")
-> reviews
+data("reviews")
+reviews
                                                                               review
 1                 This has been the best TV I've ever used. Great screen, and sound.
 2          I regret buying this laptop. It is too slow and the keyboard is too noisy
 3 Not sure how to feel about my new washing machine. Great color, but hard to figure
-> 
+
 ```
 
 ### Execute model
 In case model would be already install, the model is executed and request the model to use.
 ```r
-> summary <- reviews |> mall::llm_summarize(review, max_words = 5)
+summary <- reviews |> mall::llm_summarize(review, max_words = 5)
 Ollama local server running
 
 1: Ollama - llama3.2:latest
@@ -179,7 +189,7 @@ In this case, we want to use `llama:3.2` (option `1`). Then, the request would p
 Backend: Ollama
 LLM session: model:llama3.2:latest
 R session: cache_folder:/tmp/RtmpiLxFdf/_mall_cachea33ecaec39
-> print(summary)
+print(summary)
                                                                               review
 1                 This has been the best TV I've ever used. Great screen, and sound.
 2          I regret buying this laptop. It is too slow and the keyboard is too noisy
@@ -193,8 +203,8 @@ R session: cache_folder:/tmp/RtmpiLxFdf/_mall_cachea33ecaec39
 The classification example is as follows:
 
 ```r
-> categories <- reviews |> mall::llm_classify(review, c("appliance", "computer"))
-> print(categories)
+categories <- reviews |> mall::llm_classify(review, c("appliance", "computer"))
+print(categories)
                                                                               review
 1                 This has been the best TV I've ever used. Great screen, and sound.
 2          I regret buying this laptop. It is too slow and the keyboard is too noisy
@@ -209,7 +219,7 @@ Then, run a translation example.
 
 ```r
 translation <- reviews |> mall::llm_translate(review, "spanish")
-> print(translation)
+print(translation)
                                                                               review
 1                 This has been the best TV I've ever used. Great screen, and sound.
 2          I regret buying this laptop. It is too slow and the keyboard is too noisy
