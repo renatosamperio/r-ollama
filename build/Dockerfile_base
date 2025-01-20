@@ -1,0 +1,23 @@
+# FROM ubuntu:noble
+FROM renatosamperio/cuda-base:latest
+
+ARG MODEL_VERSION
+ARG IMAGE_PATH
+
+# install ollama manually
+COPY $IMAGE_PATH/build/install-ollama.sh /tmp/install-ollama.sh
+RUN /tmp/install-ollama.sh \
+    rm /tmp/install-ollama.sh
+
+# Add user for building packages (non-root builds are recommended)
+RUN useradd -m voldi && echo "voldi ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+USER voldi
+WORKDIR /home/voldi
+
+## Pull required llm models
+COPY $IMAGE_PATH/build/run-ollama.sh /tmp/run-ollama.sh 
+RUN bash /tmp/run-ollama.sh $MODEL_VERSION \
+    rm /tmp/run-ollama.sh
+
+EXPOSE 11434
+ENTRYPOINT ["/usr/bin/ollama", "serve"]
